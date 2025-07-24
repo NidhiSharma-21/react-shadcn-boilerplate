@@ -1,90 +1,121 @@
-import { useState } from "react"
-import { LoginForm } from "../components/auth/loginForm"
-import { ForgotPassword } from "../components/auth/forgotPassword"
-import { OTPLogin } from "../components/auth/otpLogin"
-import { ResetPassword } from "../components/auth/resetPassword"
-import type { AuthMode, AuthError } from "../types/types"
-import  { handleAuthError } from "../utils/auth-utils"
-import { toast } from "../hooks/useToast"
-import leftImage from "../assets/left_image.png"
-import Container from "../layout/container"
+import { useState } from "react";
+import { LoginForm } from "../components/auth/loginForm";
+import { ForgotPassword } from "../components/auth/forgotPassword";
+import { OTPLogin } from "../components/auth/otpLogin";
+import { ResetPassword } from "../components/auth/resetPassword";
+import type { AuthMode, AuthError } from "../types/types";
+import { handleAuthError } from "../utils/auth-utils";
+import leftImage from "../assets/left_image.png";
+import Container from "../layout/container";
+import { Toaster } from "../components/ui/sonner";
+import { toast } from 'sonner';
 
 export const AuthPage = () => {
-  const [authMode, setAuthMode] = useState<AuthMode>("login")
-  const [resetEmail, setResetEmail] = useState("")
-  const [error, setError] = useState<AuthError | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const [resetEmail, setResetEmail] = useState("");
+  const [error, setError] = useState<AuthError | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
+  // 1. SUCCESS TOAST - Login
   const handleLogin = async (credentials: any) => {
-    setIsLoading(true)
-    setError(null)
+    setIsLoading(true);
+    setError(null);
     try {
-      console.log("Login with:", credentials)
+      console.log("Login with:", credentials);
       // await loginUser(credentials)
-      toast({
-        title: "Login Successful",
-        description: `Welcome, ${credentials.email || credentials.name || "user"}!`,
+      toast.success("Login Successful", {
+        description: "Welcome back! Redirecting to your dashboard...",
       });
     } catch (err) {
-      setError(handleAuthError(err))
-      toast({
-        title: "Login Failed",
-        description: handleAuthError(err).message,
-        variant: "destructive"
+      const authError = handleAuthError(err);
+      setError(authError);
+      toast.error("Login Failed", {
+        description: authError.message || "Invalid email or password",
       });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
+  // 2. SUCCESS TOAST - OTP Verification
   const handleOTPLogin = async (phone: string, otp: string, role: string) => {
-    setIsLoading(true)
-    setError(null)
+    setIsLoading(true);
+    setError(null);
     try {
-      console.log("OTP Login with:", phone, otp, role)
+      console.log("OTP Login with:", phone, otp, role);
       // await verifyOTP({ phone, otp, role })
-      toast({
-        title: "OTP Login Successful",
-        description: `Logged in as ${role}`,
+      toast.success("OTP Verified", {
+        description: "Your phone number has been successfully verified",
       });
     } catch (err) {
-      setError(handleAuthError(err))
-      toast({
-        title: "OTP Login Failed",
-        description: handleAuthError(err).message,
-        variant: "destructive"
+      const authError = handleAuthError(err);
+      setError(authError);
+      toast.error("OTP Verification Failed", {
+        description: authError.message || "Invalid or expired OTP",
       });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
+  // 3. SUCCESS TOAST - Password Reset
   const handlePasswordReset = async (newPassword: string) => {
-    setIsLoading(true)
-    setError(null)
+    setIsLoading(true);
+    setError(null);
     try {
-      console.log("Password reset to:", newPassword)
+      console.log("Password reset to:", newPassword);
       // await updatePassword(newPassword)
-      toast({
-        title: "Password Reset Successful",
-        description: "Your password has been updated.",
+      toast.success("Password Updated", {
+        description: "Your password has been changed successfully",
       });
     } catch (err) {
-      setError(handleAuthError(err))
-      toast({
-        title: "Password Reset Failed",
-        description: handleAuthError(err).message,
-        variant: "destructive"
+      const authError = handleAuthError(err);
+      setError(authError);
+      toast.error("Password Reset Failed", {
+        description: authError.message || "Failed to update password",
       });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
+
+  // 4. INFO TOAST - Reset Link Sent
+  const handleForgotPassword = async (email: string) => {
+    setIsLoading(true);
+    try {
+      console.log("Password reset requested for:", email);
+      // await sendResetLink(email)
+      setResetEmail(email);
+      setAuthMode("reset");
+      toast.info("Reset Link Sent", {
+        description: `We've sent a password reset link to ${email}`,
+        action: {
+          label: "Resend",
+          onClick: () => handleForgotPassword(email),
+        },
+      });
+    } catch (err) {
+      const authError = handleAuthError(err);
+      toast.error("Failed to Send Reset Link", {
+        description: authError.message || "Please try again later",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 5. WARNING TOAST - Session Expiry
+  const showSessionWarning = () => {
+    toast.warning("Session Expiring Soon", {
+      description: "Your session will expire in 5 minutes. Please save your work.",
+      duration: 10000, // 10 seconds
+    });
+  };
 
   return (
     <>
       {/* Left image - hidden on mobile */}
-      <div className="hidden md:block md:h-screen md:w-1/2 ">
+      <div className="hidden md:block md:h-screen md:w-1/2">
         <img 
           src={leftImage} 
           alt="Decorative" 
@@ -92,7 +123,7 @@ export const AuthPage = () => {
         />
       </div>
       {/* Right form - full width on mobile, half on desktop */}
-      <div className="w-full md:w-1/2 h-full ">
+      <div className="w-full md:w-1/2 h-full">
         <div className="h-full flex items-center justify-center p-4">
           <Container>
             {authMode === "login" && (
@@ -106,10 +137,7 @@ export const AuthPage = () => {
             {authMode === "forgot" && (
               <ForgotPassword
                 onBack={() => setAuthMode("login")}
-                onResetLinkSent={(email) => {
-                  setResetEmail(email)
-                  setAuthMode("reset")
-                }}
+                onResetLinkSent={handleForgotPassword}
                 isLoading={isLoading}
               />
             )}
@@ -133,6 +161,7 @@ export const AuthPage = () => {
         </div>
       </div>
     </>
-  )
-}
+  );
+};
+
 export default AuthPage;
